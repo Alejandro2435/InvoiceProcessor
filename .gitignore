@@ -1,0 +1,4 @@
+#ignorar archivos innecesarios
+.vs/
+[Bb]in/
+[Oo]bj/
