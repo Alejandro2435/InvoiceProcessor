@@ -12,6 +12,6 @@ namespace InvoiceParserLib.Models.Entities
         public string Name { get; set; } = string.Empty;
         public bool IsValid { get; set; }
         public List<string> Errors { get; set; } = [];
-        public List<IInvoiceRecord> Records { get; set; } = [];
+        public List<Record> Records { get; set; } = [];
     }
 }

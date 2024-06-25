@@ -9,7 +9,7 @@
     <Grid>
         <DataGrid x:Name="DG_Partida" Margin="10,60,10,10" AutoGenerateColumns="false" IsReadOnly="True">
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Partida}" Header="Partida" Width="*"></DataGridTextColumn>
+                <DataGridTextColumn Header="Partida" Width="*"></DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
         <Button x:Name="btnSeleccionarFactura" Content="Seleccionar Factura(s) .txt" Margin="10,10,0,0" Background="White" BorderThickness="1" BorderBrush="DarkBlue" HorizontalAlignment="Left" Width="169" Height="34" VerticalAlignment="Top" Click="btnSeleccionarFactura_Click"/>

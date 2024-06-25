@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using InvoiceParserLib.Interfaces;
 
 namespace InvoiceParserLib.Models.Entities
 {
-    public class Field<T>(int index, T value )
+    public class Field<T>(int index, T value)
     {
         public int Index { get; } = index;
         public T Value { get; set; } = value;
     }
-    public class Field(int index, object value) : Field<object>(index, value) { }
+    public class Field(int index, string value) : Field<string>(index, value) { }
 }

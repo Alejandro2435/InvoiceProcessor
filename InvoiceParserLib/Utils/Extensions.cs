@@ -1,4 +1,5 @@
-﻿using static InvoiceParserLib.Utils.Globals; 
+﻿using System.Collections;
+using static InvoiceParserLib.Utils.Globals; 
 
 namespace InvoiceParserLib.Utils
 {
@@ -45,80 +46,7 @@ namespace InvoiceParserLib.Utils
         public static bool IsDateTime<T>(this T item) => DateTime.TryParse(item?.ToString(), out _);
 
         public static string CastDoubleToStringFormat(this double _value) => $"{_value}{(_value % 1 == 0 ? ".000" : string.Empty)}";
-        //public static object? ParseStringRecordToObject(this string record)
-        //{
-        //    try 
-        //    { 
-        //        string[] fields = record.Split(pipeSeparator);
-        //        if (GlobalValidations<string>.HasElements(fields))
-        //        {
-        //            string recordType = fields[0];
-        //            if (recordType.IsValidRecordType())
-        //            {
-        //                string recordTypeModel = recordType.GetModelByRecordType();
-        //                Type modelObjectType = GetObjectModelType(recordTypeModel);
-        //                object? modelObject;
-        //                if (modelObjectType == typeof(object))
-        //                    modelObject = null;
-        //                else
-        //                    modelObject = modelObjectType.GetConstructor([typeof(string)]).Invoke([record]);
-        //                return modelObject;
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Log(ex.Message);
-        //    }
 
-        //    return null;
-        //}
-
-        //public static Type GetObjectModelType(string modelName)
-        //{
-        //    string _modelName = modelName.Replace(" ", string.Empty);
-        //    string customTypeName = $"{ModelsNameSpace}{(dic_TiposRegistro.ContainsValue(modelName)? ".RecordEntities" : string.Empty)}.{_modelName}";
-        //    return Type.GetType(customTypeName) is null ? typeof(object) : Type.GetType(customTypeName);
-        //}
-        //#region GetValues
-        //public static string GetStringAtPosition(this ICollection<string> fields, int position)
-        //{
-        //    return GlobalValidations<string>.ExistsInCollection(fields, position)? fields.ToList()[position] : string.Empty;
-        //}
-        //public static double GetDoubleAtPosition(this ICollection<string> fields, int position)
-        //{
-        //    if (GlobalValidations<string>.ExistsInCollection(fields, position)) {
-        //        double.TryParse(fields.ToList()[position], out double value);
-        //        return value;
-        //    }
-        //    return 0.0f;
-        //}
-        //public static long GetLongAtPosition(this ICollection<string> fields, int position)
-        //{
-        //    if (GlobalValidations<string>.ExistsInCollection(fields, position))
-        //    {
-        //        long.TryParse(fields.ToList()[position], out long value);
-        //        return value;
-        //    }
-        //    return 0;
-        //}
-        //public static int GetIntAtPosition(this ICollection<string> fields, int position)
-        //{
-        //    if (GlobalValidations<string>.ExistsInCollection(fields, position))
-        //    {
-        //        int.TryParse(fields.ToList()[position], out int value);
-        //        return value;
-        //    }
-        //    return 0;
-        //}
-        //public static DateTime? GetDateAtPosition(this ICollection<string> fields, int position)
-        //{
-        //    if (!GlobalValidations<string>.ExistsInCollection(fields, position))
-        //        return null;
-        //    if (DateTime.TryParseExact(fields.ToList()[position], InvoiceFileDateFormat, new CultureInfo(UsEnglishCulture), DateTimeStyles.None, out DateTime value))
-        //        return value;
-        //    return null;
-        //}
-        //#endregion
+        public static bool HasElements(this ICollection collection) => collection.Count > 0;
     }
 }
