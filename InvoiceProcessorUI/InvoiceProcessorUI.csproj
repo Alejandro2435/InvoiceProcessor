@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\InvoiceParserLib\InvoiceParserLib.csproj" />
+    <ProjectReference Include="..\InvoiceParserLib\InvoiceProcessor.csproj" />
   </ItemGroup>
 
 </Project>

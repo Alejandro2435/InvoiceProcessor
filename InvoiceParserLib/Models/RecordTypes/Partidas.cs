@@ -1,14 +1,10 @@
-﻿using InvoiceParserLib.Interfaces;
-using InvoiceParserLib.Models.Entities;
-using static InvoiceParserLib.Utils.Globals;
+﻿using InvoiceProcessor.Models.Entities;
 
-namespace ValidadorFacturasTXT.Models.RecordEntities
+namespace InvoiceProcessor.Models.RecordEntities
 {
     public class Partidas : Record
     {
         public Partidas() : base("Partidas", "551", 49) { }
-
-        public Field Tipo_Registro { get; set; } = new(0, string.Empty);
         public Field Fraccion { get; set; } = new(1, string.Empty);
         public Field Descripcion { get; set; } = new(2, string.Empty);
         public Field No_Parte { get; set; } = new(3, string.Empty);
@@ -56,10 +52,5 @@ namespace ValidadorFacturasTXT.Models.RecordEntities
         public Field Codigo_NICO { get; set; } = new(46, string.Empty);
         public Field<long> Bultos { get; set; } = new(47, 0);
         public Field<long> Código_del_Producto { get; set; } = new(48, 0);
-
-        public override void SetPropertyValues(List<Field> fields)
-        {
-            AssignPropertyValue(this, fields);
-        }
     }
 }

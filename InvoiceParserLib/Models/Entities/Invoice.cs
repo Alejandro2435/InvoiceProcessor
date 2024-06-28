@@ -1,11 +1,11 @@
-﻿using InvoiceParserLib.Interfaces;
+﻿using InvoiceProcessor.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace InvoiceParserLib.Models.Entities
+namespace InvoiceProcessor.Models.Entities
 {
     public class Invoice
     {

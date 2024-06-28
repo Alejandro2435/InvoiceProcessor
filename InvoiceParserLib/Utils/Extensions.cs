@@ -1,7 +1,7 @@
 ﻿using System.Collections;
-using static InvoiceParserLib.Utils.Globals; 
+using static InvoiceProcessor.Utils.Globals; 
 
-namespace InvoiceParserLib.Utils
+namespace InvoiceProcessor.Utils
 {
     public static class Extensions
     {

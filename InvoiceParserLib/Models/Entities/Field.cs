@@ -1,6 +1,6 @@
-﻿using InvoiceParserLib.Interfaces;
+﻿using InvoiceProcessor.Interfaces;
 
-namespace InvoiceParserLib.Models.Entities
+namespace InvoiceProcessor.Models.Entities
 {
     public class Field<T>(int index, T value)
     {

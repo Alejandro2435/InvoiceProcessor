@@ -1,7 +1,8 @@
-﻿using InvoiceParserLib;
-using InvoiceParserLib.Models.Entities;
-using InvoiceParserLib.Utils;
+﻿using InvoiceProcessor;
+using InvoiceProcessor.Models.Entities;
+using InvoiceProcessor.Utils;
 using Microsoft.Win32;
+using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,26 +30,13 @@ namespace InvoiceProcessorUI
         List<string> invoiceFiles = [];
         protected async Task FillGrid(List<string> invoiceFiles)
         {
-            InvoiceParser inv = new(invoiceFiles[0]);
-            Invoice invv = await inv.ParseAsync();
-            //List<InvoiceResult> invoiceErrors = await GetInvoiceWithErrorsAsync(invoiceFiles);
-            //_invoiceErrors = invoiceErrors.Select(invoice =>
-            //            new InvoiceResultViewModel
-            //            {
-            //                Nombre_Factura = invoice.invoiceName,
-            //                Errores_de_Factura = invoice.recordsWithErrors.Select(record =>
-            //                new RecordResultViewModel
-            //                {
-            //                    Nombre_Registro = record.recordName,
-            //                    Tipo_Registro = record.recordType,
-            //                    Linea_Registro = record.fileLine,
-            //                    Errores_de_Registro = record.recordErrors
-            //                }).ToList()z
-            //            }
-            //        ).ToList();
+            Stopwatch sw = Stopwatch.StartNew();
+            InvoiceParser inv = new(invoiceFiles[0], Enums.OriginOfInvoiceContent.FromFilePath, 10);
+            Invoice invv = await Task.FromResult(inv.ParseAsync().Result);
+            sw.Stop();
+            string timeElapsed = $"{Math.Round(sw.Elapsed.TotalMinutes,3)} minutos";
             //Application.Current.Dispatcher.Invoke(() => { GV_ErroresFacturas.ItemsSource = _invoiceErrors; });
             ChangeProgressBarVisibility(Visibility.Collapsed);
-            int z = 0;
         }
         protected void ChangeProgressBarVisibility(Visibility visibility)
         {
@@ -58,11 +46,11 @@ namespace InvoiceProcessorUI
         private void btnSeleccionarFactura_Click(object sender, RoutedEventArgs e)
         {
             try{
-            OpenFileDialog fileDialog = new()
-            {
-                Multiselect = false,
-                Filter = "Text files (*.txt) | *.txt"
-            };
+                OpenFileDialog fileDialog = new()
+                {
+                    Multiselect = false,
+                    Filter = "Text files (*.txt) | *.txt"
+                };
 
                 if (fileDialog.ShowDialog() == true)
                 {
@@ -74,9 +62,9 @@ namespace InvoiceProcessorUI
                     }
                 } 
             }
-            catch(Exception ex) 
+            catch(Exception) 
             {
-                int x = 0;   
+                
             }
         }
     }

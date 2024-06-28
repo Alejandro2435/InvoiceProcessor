@@ -1,8 +1,9 @@
-﻿using InvoiceParserLib.Interfaces;
-using InvoiceParserLib.Models.Entities;
-using ValidadorFacturasTXT.Models.RecordEntities;
+﻿using InvoiceProcessor.Interfaces;
+using InvoiceProcessor.Models.Entities;
+using InvoiceProcessor.Models.RecordEntities;
+using System.Collections.Concurrent;
 
-namespace InvoiceParserLib.Utils
+namespace InvoiceProcessor.Utils
 {
     public static class Enums
     {
@@ -17,31 +18,33 @@ namespace InvoiceParserLib.Utils
             FromFilePath
         }
 
-        public static readonly Dictionary<string, Record> RecordEntities = new()
+        public static readonly Dictionary<string, Record> RecordEntitiess = new()
         {
-            //{ "501", new Record() },
-            //{ "CCC", new Record() },
-            //{ "502", new Record() },
-            //{ "503", new Record() },
-            //{ "504", new Record() },
-            //{ "PAM", new Record() },
-            //{ "505", new Record() },
-            //{ "PPP", new Record() },
-            //{ "FFF", new Record() },
-            //{ "506", new Record() },
-            //{ "507", new Record() },
-            //{ "511", new Record() },
-            //{ "512", new Record() },
-            //{ "516", new Record() },
-            //{ "520", new Record() },
+            { "501", new DatosGenerales() },
+            { "CCC", new CodigoImportador() },
+            { "502", new Transportistas() },
+            { "503", new Guias() },
+            { "504", new Contenedores() },
+            { "PAM", new PedimentoAmericano() },
+            { "505", new Facturas() },
+            { "PPP", new CodigoProveedor() },
+            { "FFF", new CodigoEmisorCertificadoOrigen() },
+            { "506", new Fechas() },
+            { "507", new CasosNivelPedimento() },
+            { "511", new ObservacionesFactura() },
+            { "512", new Descargas() },
+            { "516", new Candados() },
+            { "520", new Destinatarios() },
             { "551", new Partidas() },
-            //{ "552", new Record() },
-            //{ "553", new Record() },
-            //{ "554", new Record() },
-            //{ "558", new Record() },
-            //{ "559", new Record() },
-            //{ "PCP", new Record() },
-            //{ "999", new Record() }
+            { "552", new Mercancias() },
+            { "553", new Permisos() },
+            { "554", new CasosNivelPartidas() },
+            { "558", new ObservacionesPartidas() },
+            { "559", new DescripcionEspecificaMercancias() },
+            { "PCP", new InformacionCartaPorte() },
+            { "999", new FinalizacionArchivo() }
         };
+
+        public static readonly ConcurrentDictionary<string, Record> RecordEntities = new(RecordEntitiess);
     }
 }

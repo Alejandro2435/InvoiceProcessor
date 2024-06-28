@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceProcessorUI", "Invoi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceParser", "InvoiceParser\InvoiceParser.csproj", "{21FAB83E-0642-4D60-B8EA-E6DC98BF5F70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceParserLib", "InvoiceParserLib\InvoiceParserLib.csproj", "{EDC5FBDA-9585-49BD-9593-D67C2E96E9EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceProcessor", "InvoiceParserLib\InvoiceProcessor.csproj", "{EDC5FBDA-9585-49BD-9593-D67C2E96E9EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
