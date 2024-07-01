@@ -2,8 +2,7 @@
 using InvoiceProcessor.Models.Entities;
 using InvoiceProcessor.Utils;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
+using System.Collections.Generic;
 using static InvoiceProcessor.Utils.Enums;
 using static InvoiceProcessor.Utils.Globals;
 
@@ -11,37 +10,18 @@ namespace InvoiceProcessor
 {
     public class InvoiceParser
     {
-        private readonly string _invoice = string.Empty;
-        private readonly OriginOfInvoiceContent _originOfInvoiceContent = OriginOfInvoiceContent.FromFilePath;
+        private readonly ICollection<(int, string)> _recordLines; 
         private readonly int _distributeFactor;
 
-        public InvoiceParser(string invoiceTXT, OriginOfInvoiceContent originOfInvoiceContent = OriginOfInvoiceContent.FromFilePath, int distributeFactor = 1000)
+        public InvoiceParser(ICollection<(int, string)> recordLines, int distributeFactor = 1000)
         {
-            _invoice = invoiceTXT;
-            _originOfInvoiceContent = originOfInvoiceContent;
+            _recordLines = recordLines;
             _distributeFactor = distributeFactor;
         }
 
-        private List<string> GetRecordLines() 
+        public static ICollection<Field> GetFields(string record)
         {
-            List<string> recordLines = [];
-            try
-            {
-                if (_originOfInvoiceContent == OriginOfInvoiceContent.FromFilePath)
-                    recordLines = File.ReadAllLines(_invoice, Encoding.UTF8).ToList();
-                else
-                    recordLines = _invoice.Split(Environment.NewLine.ToCharArray()).ToList();
-            }
-            catch(Exception ex) 
-            {
-                Log(ex.Message);
-            }
-            return recordLines;
-        }
-
-        public static List<Field> GetFields(string record)
-        {
-            List<Field> fields;
+            ICollection<Field> fields;
             try
             {
                 fields = record.Split((char)Separator.pipe).Select((field, index) => new Field(index, field)).ToList();
@@ -53,16 +33,26 @@ namespace InvoiceProcessor
             return fields;
         }
 
-        private List<List<string>> DistributeRecordLines(List<string> invoiceRecords)
+        private List<ICollection<(int, string)>> DistributeRecordLines()
         {
-            List<List<string>> records = [];
+            List<ICollection<(int, string)>> records = [];
+            int groupsCount = (int)Math.Floor((decimal)_recordLines.Count / _distributeFactor);
             try
             {
-                records = invoiceRecords.
-                    Select((val, idx) => new { Index = idx, Value = val })
-                    .GroupBy(val => val.Index / _distributeFactor)
-                    .Select(val => val.Select(v => v.Value).ToList())
-                    .ToList();
+                for(int i = 0; i < groupsCount; i++)
+                {
+                    int skip = i * _distributeFactor;
+                    int take = _distributeFactor;
+                    List< (int, string)> groupedRecordLines = _recordLines.ToList().GetRange(skip, take);
+                    records.Add(groupedRecordLines);
+                }
+                int maxGroupNumber = _distributeFactor * groupsCount;
+                records.Add(_recordLines.ToList().GetRange(maxGroupNumber, _recordLines.Count - maxGroupNumber));
+                //records = invoiceRecords.
+                //    Select((val, idx) => new { Index = idx, Value = val })
+                //    .GroupBy(val => val.Index / _distributeFactor)
+                //    .Select(val => val.Select(v => v.Value).ToList())
+                //    .ToList();
             }
             catch (Exception ex)
             {
@@ -71,21 +61,28 @@ namespace InvoiceProcessor
             return records;
         }
 
-        private static Record ParseRecordLine(string recordLine)
+        private static Record ParseRecordLine((int,string) recordLine)
         {
-            List<Field> fields = GetFields(recordLine);
+            ICollection<Field> fields = GetFields(recordLine.Item2);
             Record record = null;
-            string? recordType = fields.First(field => field.Index == 0)?.Value?.ToString();
-            if (recordType.NotNull() && RecordEntities.TryGetValue(recordType, out var _record))
+            try{
+                string? recordType = fields.First(field => field.Index == 0)?.Value?.ToString();
+                if (recordType.NotNull() && RecordEntities.TryGetValue(recordType, out var _record))
+                {
+                    _record.Content = recordLine.Item2;
+                    _record.FileLine = recordLine.Item1;
+                    _record.SetPropertyValues(fields.ToList());
+                    record = _record;
+                } 
+            }
+            catch(Exception ex)
             {
-                _record.Content = recordLine;
-                _record.SetPropertyValues(fields);
-                record = _record;
+                Log(ex.Message);
             }
             return record;
         }
 
-        private static async Task<List<Record>> GetRecordsAsync(List<string> recordLines)
+        private static async Task<List<Record>> GetRecordsAsync(List<(int,string)> recordLines)
         {
             Task<List<Record>> getRecordsTask = null;
             List<Record> records = [];
@@ -103,97 +100,30 @@ namespace InvoiceProcessor
             return await getRecordsTask;
         }
 
-        //private Task<List<Record>> GetRecordss(List<string> recordLines)
-        //{
-        //    //List<Task<List<Record>>> parsingRecordsTasks = [];
-        //    //Task<List<Record>> parsingRecordsTask = null;
-        //    //ConcurrentBag<Record> records = [];
-        //    //try{
-        //    //    if (_originOfInvoiceContent == OriginOfInvoiceContent.FromFilePath)
-        //    //        recordLines = File.ReadAllLines(_invoice, Encoding.UTF8).ToList();
-        //    //    else
-        //    //        recordLines = _invoice.Split(Environment.NewLine.ToCharArray()).ToList();
-
-        //    //    List<List<string>> distributedRecordLines = DistributeRecords(recordLines);
-        //    //    //ConcurrentBag<Record> result = [];
-        //    //    //parsingRecordsTasks = distributedRecordLines.Select(recordLinesGroup => Task.Run(() => {
-        //    //    //        List<Record> records = recordLines.Select(recordLine => ParseRecordLine(recordLine)).ToList();
-        //    //    //        return records;
-        //    //    //    })
-        //    //    //).ToList();
-        //    //    parsingRecordsTask = Task.Run(() =>
-        //    //    {
-        //    //        distributedRecordLines.ForEach(async recordLinesGroup =>
-        //    //        {
-        //    //            Task<List<Record>> parseRecordLineTask = Task.Run(() =>
-        //    //            {
-        //    //                recordLinesGroup.ForEach(recordLine => {
-        //    //                    Record record = ParseRecordLine(recordLine);
-        //    //                    records.Add(record);
-        //    //                });
-        //    //                return records.ToList();
-        //    //            });
-        //    //        });
-        //    //        return parsingRecordsTask;
-        //    //    });
-              
-        //    //    //await Parallel.ForEachAsync(distributedRecordLines, (_recordLines, cancelToken) =>
-        //    //    //{
-        //    //    //    List<Task<Record>> r = Task.Run(() => {
-        //    //    //        _recordLines.ForEach(recordLine =>
-        //    //    //        {
-        //    //    //            List<Field> fields = GetFields(recordLine);
-        //    //    //            string? recordType = fields.First(field => field.Index == 0)?.Value?.ToString();
-        //    //    //            if (recordType.NotNull() && RecordEntities.TryGetValue(recordType, out var record))
-        //    //    //            {
-        //    //    //                record.Content = recordLine;
-        //    //    //                record.SetPropertyValues(fields);
-        //    //    //                records.Add(record);
-        //    //    //            }
-        //    //    //        });
-        //    //    //    });
-        //    //    //    return Task.WhenAll(r).Result;
-        //    //    //});
-        //    //    //await Parallel.ForEachAsync(recordLines, (recordLine, cancelToken) =>
-        //    //    //{
-        //    //    //    List<Field> fields = GetFields(recordLine);
-        //    //    //    string? recordType = fields.First(field => field.Index == 0)?.Value?.ToString();
-        //    //    //    if (recordType.NotNull() && RecordEntities.TryGetValue(recordType, out var record))
-        //    //    //    {
-        //    //    //        record.Content = recordLine;
-        //    //    //        record.SetPropertyValues(fields);
-        //    //    //        records.Add(record);
-        //    //    //    }
-        //    //    //    return ValueTask.CompletedTask;
-        //    //    //});
-        //    //}
-        //    //catch (Exception ex)
-        //    //{
-        //    //    Log(ex.Message);
-        //    //}
-        //    //return parsingRecordsTask;
-        //    //return records.ToList();
-        //}
-
         public async Task<Invoice> ParseAsync()
         {
             Invoice invoice = new();
-            List<Record> records = [];
+            //List<Record> records = [];
             List<Task<List<Record>>> parsingRecordsTaskList = [];
+            ConcurrentBag<Record> _records = [];
             try
             {
-                List<List<string>> recordLines = DistributeRecordLines(GetRecordLines());
-                recordLines.ForEach(async recordLinesGroup =>
+                List<ICollection<(int,string)>> recordLines = DistributeRecordLines();
+                await Parallel.ForEachAsync(recordLines, async (recordLinesGroup, ct) =>
                 {
-                    Task<List<Record>> parseRecordLinesTask = GetRecordsAsync(recordLinesGroup);
-                    parsingRecordsTaskList.Add(parseRecordLinesTask);
-                    records.AddRange(await Task.FromResult(parseRecordLinesTask).Result);
+                    List<Record> records = await GetRecordsAsync(recordLinesGroup.ToList());
+                    records.ForEach(recordLine => _records.Add(recordLine));
+                    
                 });
+                //recordLines.ForEach(async recordLinesGroup =>
+                //{
+                //    Task<List<Record>> parseRecordLinesTask = GetRecordsAsync(recordLinesGroup);
+                //    parsingRecordsTaskList.Add(parseRecordLinesTask);
+                //    records.AddRange(await Task.FromResult(parseRecordLinesTask).Result);
+                //});
                 await Task.WhenAll(parsingRecordsTaskList);
 
-                invoice.Name = _invoice.Split('\\').ToList().Last().ToString();
-
-                invoice.Records = records;
+                invoice.Records = _records.ToList();
             }
             catch (Exception ex)
             {

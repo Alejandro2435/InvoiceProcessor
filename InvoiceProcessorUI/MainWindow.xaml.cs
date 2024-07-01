@@ -3,16 +3,8 @@ using InvoiceProcessor.Models.Entities;
 using InvoiceProcessor.Utils;
 using Microsoft.Win32;
 using System.Diagnostics;
-using System.Text;
+using System.IO;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace InvoiceProcessorUI
 {
@@ -28,13 +20,16 @@ namespace InvoiceProcessorUI
         }
 
         List<string> invoiceFiles = [];
+
         protected async Task FillGrid(List<string> invoiceFiles)
         {
             Stopwatch sw = Stopwatch.StartNew();
-            InvoiceParser inv = new(invoiceFiles[0], Enums.OriginOfInvoiceContent.FromFilePath, 10);
+            string[] _invoice = File.ReadAllLines(invoiceFiles[0]);
+            List<(int, string)> _invoiceLines = _invoice.Select((line, idx) => (idx + 1 , line)).ToList();
+            InvoiceParser inv = new(_invoiceLines, 1000);
             Invoice invv = await Task.FromResult(inv.ParseAsync().Result);
             sw.Stop();
-            string timeElapsed = $"{Math.Round(sw.Elapsed.TotalMinutes,3)} minutos";
+            string timeElapsed = $"{Math.Round((double)sw.ElapsedMilliseconds / 60000, 3)} minutos";
             //Application.Current.Dispatcher.Invoke(() => { GV_ErroresFacturas.ItemsSource = _invoiceErrors; });
             ChangeProgressBarVisibility(Visibility.Collapsed);
         }
