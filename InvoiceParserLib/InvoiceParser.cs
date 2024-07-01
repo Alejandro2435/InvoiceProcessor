@@ -1,8 +1,6 @@
-﻿using InvoiceProcessor.Interfaces;
-using InvoiceProcessor.Models.Entities;
+﻿using InvoiceProcessor.Models.Entities;
 using InvoiceProcessor.Utils;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using static InvoiceProcessor.Utils.Enums;
 using static InvoiceProcessor.Utils.Globals;
 
@@ -21,14 +19,13 @@ namespace InvoiceProcessor
 
         public static ICollection<Field> GetFields(string record)
         {
-            ICollection<Field> fields;
+            ICollection<Field> fields = [];
             try
             {
                 fields = record.Split((char)Separator.pipe).Select((field, index) => new Field(index, field)).ToList();
             } catch (Exception ex)
             {
                 Log(ex.Message);
-                fields = [];
             }
             return fields;
         }
@@ -48,11 +45,6 @@ namespace InvoiceProcessor
                 }
                 int maxGroupNumber = _distributeFactor * groupsCount;
                 records.Add(_recordLines.ToList().GetRange(maxGroupNumber, _recordLines.Count - maxGroupNumber));
-                //records = invoiceRecords.
-                //    Select((val, idx) => new { Index = idx, Value = val })
-                //    .GroupBy(val => val.Index / _distributeFactor)
-                //    .Select(val => val.Select(v => v.Value).ToList())
-                //    .ToList();
             }
             catch (Exception ex)
             {
@@ -103,8 +95,6 @@ namespace InvoiceProcessor
         public async Task<Invoice> ParseAsync()
         {
             Invoice invoice = new();
-            //List<Record> records = [];
-            List<Task<List<Record>>> parsingRecordsTaskList = [];
             ConcurrentBag<Record> _records = [];
             try
             {
@@ -112,17 +102,10 @@ namespace InvoiceProcessor
                 await Parallel.ForEachAsync(recordLines, async (recordLinesGroup, ct) =>
                 {
                     List<Record> records = await GetRecordsAsync(recordLinesGroup.ToList());
-                    records.ForEach(recordLine => _records.Add(recordLine));
+                    Parallel.ForEach(records, (record, ct) => _records.Add(record));
+                    //records.ForEach(recordLine => _records.Add(recordLine));
                     
                 });
-                //recordLines.ForEach(async recordLinesGroup =>
-                //{
-                //    Task<List<Record>> parseRecordLinesTask = GetRecordsAsync(recordLinesGroup);
-                //    parsingRecordsTaskList.Add(parseRecordLinesTask);
-                //    records.AddRange(await Task.FromResult(parseRecordLinesTask).Result);
-                //});
-                await Task.WhenAll(parsingRecordsTaskList);
-
                 invoice.Records = _records.ToList();
             }
             catch (Exception ex)

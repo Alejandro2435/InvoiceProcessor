@@ -31,13 +31,14 @@ namespace InvoiceProcessor.Utils
 
         public static void Log(string logMessage)
         {
-            string logPath = $"{Directory.GetCurrentDirectory()}/Log_{DateTime.Now:dd-MM-yyyy}.txt";
+            string logPath = $"{Directory.GetCurrentDirectory()}/Log_{DateTime.Now:dd-MM-yyyy}/{Environment.CurrentManagedThreadId}.txt";
             StringBuilder logContent = new();
             logContent.Append($"{new string('-', 20)} {DateTime.Now:dd-MM-yyyy HH:mm:ss tt} {new string('-', 20)}\n");
             logContent.Append($"{logMessage}\n");
-            using FileStream fs = new FileStream(logPath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-            fs.Write(UTF8Encoding.UTF8.GetBytes(logContent.ToString()));
-            //File.AppendAllText(logPath, logContent.ToString());
+            //if (!File.Exists(logPath)) { File.Create(logPath); }
+            //using FileStream fs = new(logPath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+            //fs.WriteAsync(UTF8Encoding.UTF8.GetBytes(logContent.ToString()));
+            File.AppendAllText(logPath, logContent.ToString());
         }
     }
 }
