@@ -18,7 +18,7 @@ namespace InvoiceProcessor
             _distributeFactor = distributeFactor;
         }
 
-        public ICollection<Field> GetFields(string record)
+        public static ICollection<Field> GetFields(string record)
         {
             Stopwatch sw = Stopwatch.StartNew();
             ICollection<Field> fields = [];
@@ -55,7 +55,7 @@ namespace InvoiceProcessor
             return records;
         }
 
-        public Record? ParseRecordLine((int,string) recordLine)
+        public static Record? ParseRecordLine((int,string) recordLine)
         {
             ICollection<Field> fields = GetFields(recordLine.Item2);
             Stopwatch sw = Stopwatch.StartNew();
@@ -77,7 +77,7 @@ namespace InvoiceProcessor
             return record;
         }
 
-        private List<Record?> GetRecords(List<(int,string)> recordLines)
+        public static List<Record?> GetRecords(List<(int,string)> recordLines)
         {
             Stopwatch sw = Stopwatch.StartNew();
             List<Record?> records = [];
@@ -90,27 +90,6 @@ namespace InvoiceProcessor
                 Log(ex.Message);
             }
             return records;
-        }
-
-        public Invoice Parse()
-        {
-            Invoice invoice = new();
-            List<Record?> _records = [];
-            try
-            {
-                List<ICollection<(int,string)>> recordLines = DistributeRecordLines();
-                recordLines.ForEach(recordLinesGroup =>
-                {
-                    List<Record?> records = GetRecords(recordLinesGroup.ToList());
-                    _records.AddRange(records);
-                });
-                invoice.Records = _records;
-            }
-            catch (Exception ex)
-            {
-                Log(ex.Message);
-            }
-            return invoice;
         }
 
         public async Task<Invoice> ParseAsync()

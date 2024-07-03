@@ -3,6 +3,7 @@ using InvoiceProcessor.Models.Entities;
 using InvoiceProcessor.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -24,11 +25,14 @@ namespace InvoiceProcessorUI
         protected async Task FillGrid(List<string> invoiceFiles)
         {
             Stopwatch sw = Stopwatch.StartNew();
-            string[] _invoice = File.ReadAllLines(invoiceFiles[0]);
-            List<(int, string)> _invoiceLines = _invoice.Select((line, idx) => (idx + 1 , line)).ToList();
-            InvoiceParser inv = new(_invoiceLines, 1000);
-            Invoice invv = await Task.FromResult(inv.ParseAsync().Result);
-            //Invoice invv = inv.ParseAsync();
+            ConcurrentBag<Invoice> invoices = [];
+            await Parallel.ForEachAsync(invoiceFiles, async (invoiceFile, cancelToken) => {
+                string[] _invoice = File.ReadAllLines(invoiceFile);
+                List<(int, string)> _invoiceLines = _invoice.Select((line, idx) => (idx + 1, line)).ToList();
+                InvoiceParser parser = new(_invoiceLines, 1000);
+                Invoice invoice = await Task.FromResult(parser.ParseAsync().Result);
+                invoices.Add(invoice);
+            });
             sw.Stop();
             string timeElapsed = $"{Math.Round((double)sw.ElapsedMilliseconds / 60000, 3)} minutos";
             //Application.Current.Dispatcher.Invoke(() => { GV_ErroresFacturas.ItemsSource = _invoiceErrors; });
@@ -44,7 +48,7 @@ namespace InvoiceProcessorUI
             try{
                 OpenFileDialog fileDialog = new()
                 {
-                    Multiselect = false,
+                    Multiselect = true,
                     Filter = "Text files (*.txt) | *.txt"
                 };
 
