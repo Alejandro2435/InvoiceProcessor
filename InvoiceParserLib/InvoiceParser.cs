@@ -1,6 +1,7 @@
 ﻿using InvoiceProcessor.Models.Entities;
 using InvoiceProcessor.Utils;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using static InvoiceProcessor.Utils.Enums;
 using static InvoiceProcessor.Utils.Globals;
 
@@ -17,8 +18,9 @@ namespace InvoiceProcessor
             _distributeFactor = distributeFactor;
         }
 
-        public static ICollection<Field> GetFields(string record)
+        public ICollection<Field> GetFields(string record)
         {
+            Stopwatch sw = Stopwatch.StartNew();
             ICollection<Field> fields = [];
             try
             {
@@ -40,7 +42,7 @@ namespace InvoiceProcessor
                 {
                     int skip = i * _distributeFactor;
                     int take = _distributeFactor;
-                    List< (int, string)> groupedRecordLines = _recordLines.ToList().GetRange(skip, take);
+                    List<(int, string)> groupedRecordLines = _recordLines.ToList().GetRange(skip, take);
                     records.Add(groupedRecordLines);
                 }
                 int maxGroupNumber = _distributeFactor * groupsCount;
@@ -53,10 +55,11 @@ namespace InvoiceProcessor
             return records;
         }
 
-        private static Record ParseRecordLine((int,string) recordLine)
+        public Record? ParseRecordLine((int,string) recordLine)
         {
             ICollection<Field> fields = GetFields(recordLine.Item2);
-            Record record = null;
+            Stopwatch sw = Stopwatch.StartNew();
+            Record? record = null;
             try{
                 string? recordType = fields.First(field => field.Index == 0)?.Value?.ToString();
                 if (recordType.NotNull() && RecordEntities.TryGetValue(recordType, out var _record))
@@ -74,45 +77,65 @@ namespace InvoiceProcessor
             return record;
         }
 
-        private static async Task<List<Record>> GetRecordsAsync(List<(int,string)> recordLines)
+        private List<Record?> GetRecords(List<(int,string)> recordLines)
         {
-            Task<List<Record>> getRecordsTask = null;
-            List<Record> records = [];
+            Stopwatch sw = Stopwatch.StartNew();
+            List<Record?> records = [];
             try
             {
-                getRecordsTask = Task.Run(() => {
-                    records = recordLines.Select(recordLine => ParseRecordLine(recordLine)).ToList();
-                    return records;
-                });
+                records = recordLines.AsParallel().Select(ParseRecordLine).Where(record => record.NotNull()).ToList();
             }
             catch(Exception ex) 
             { 
                 Log(ex.Message);
             }
-            return await getRecordsTask;
+            return records;
         }
 
-        public async Task<Invoice> ParseAsync()
+        public Invoice Parse()
         {
             Invoice invoice = new();
-            ConcurrentBag<Record> _records = [];
+            List<Record?> _records = [];
             try
             {
                 List<ICollection<(int,string)>> recordLines = DistributeRecordLines();
-                await Parallel.ForEachAsync(recordLines, async (recordLinesGroup, ct) =>
+                recordLines.ForEach(recordLinesGroup =>
                 {
-                    List<Record> records = await GetRecordsAsync(recordLinesGroup.ToList());
-                    Parallel.ForEach(records, (record, ct) => _records.Add(record));
-                    //records.ForEach(recordLine => _records.Add(recordLine));
-                    
+                    List<Record?> records = GetRecords(recordLinesGroup.ToList());
+                    _records.AddRange(records);
                 });
-                invoice.Records = _records.ToList();
+                invoice.Records = _records;
             }
             catch (Exception ex)
             {
                 Log(ex.Message);
             }
-            return await Task.FromResult(invoice);
+            return invoice;
+        }
+
+        public async Task<Invoice> ParseAsync()
+        {
+            Invoice invoice = new();
+            ConcurrentBag<Record?> _records = [];
+            try
+            {
+                List<ICollection<(int, string)>> distributedLines = DistributeRecordLines();
+                await Parallel.ForEachAsync(distributedLines, async (lines, cancelToken) =>
+                {
+                    await Task.Run(() =>
+                    {
+                        List<Record?> records = GetRecords(lines.ToList());
+                        Parallel.ForEach(records, record => _records.Add(record));
+                    }, cancelToken);
+                });
+                invoice.Records = _records.ToList();
+            }
+            catch(Exception ex)
+            {
+                Log(ex.Message);
+            }
+
+            return invoice;
         }
     }
 }

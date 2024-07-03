@@ -1,6 +1,7 @@
 ﻿using InvoiceProcessor;
 using InvoiceProcessor.Models.Entities;
 using InvoiceProcessor.Utils;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
@@ -20,7 +21,6 @@ namespace InvoiceProcessorUI
         }
 
         List<string> invoiceFiles = [];
-
         protected async Task FillGrid(List<string> invoiceFiles)
         {
             Stopwatch sw = Stopwatch.StartNew();
@@ -28,6 +28,7 @@ namespace InvoiceProcessorUI
             List<(int, string)> _invoiceLines = _invoice.Select((line, idx) => (idx + 1 , line)).ToList();
             InvoiceParser inv = new(_invoiceLines, 1000);
             Invoice invv = await Task.FromResult(inv.ParseAsync().Result);
+            //Invoice invv = inv.ParseAsync();
             sw.Stop();
             string timeElapsed = $"{Math.Round((double)sw.ElapsedMilliseconds / 60000, 3)} minutos";
             //Application.Current.Dispatcher.Invoke(() => { GV_ErroresFacturas.ItemsSource = _invoiceErrors; });

@@ -12,7 +12,7 @@ namespace InvoiceProcessor.Utils
                 List<PropertyInfo> properties = [.. entity.GetType().GetProperties().Where(property => {
                     Type propType = property.PropertyType;
                     bool isBaseType = propType.IsGenericType && propType.GetGenericTypeDefinition() == typeof(Field<>);
-                    return propType.Equals(typeof(Field)) || isBaseType && property.CanWrite;
+                    return (propType.Equals(typeof(Field)) || isBaseType) && property.CanWrite;
                 })];
                 properties.ForEach(property =>
                 {
@@ -23,22 +23,25 @@ namespace InvoiceProcessor.Utils
                     }
                 }); 
             }
-            catch(Exception)
+            catch(Exception ex)
             {
-
+                Log(ex.Message);
             }
         }
 
         public static void Log(string logMessage)
         {
-            string logPath = $"{Directory.GetCurrentDirectory()}/Log_{DateTime.Now:dd-MM-yyyy}/{Environment.CurrentManagedThreadId}.txt";
-            StringBuilder logContent = new();
-            logContent.Append($"{new string('-', 20)} {DateTime.Now:dd-MM-yyyy HH:mm:ss tt} {new string('-', 20)}\n");
-            logContent.Append($"{logMessage}\n");
-            //if (!File.Exists(logPath)) { File.Create(logPath); }
-            //using FileStream fs = new(logPath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-            //fs.WriteAsync(UTF8Encoding.UTF8.GetBytes(logContent.ToString()));
-            File.AppendAllText(logPath, logContent.ToString());
+            try{
+                string logDirectory = $"{Directory.GetCurrentDirectory()}/Log_{DateTime.Now:dd-MM-yyyy}";
+                string logPath = $"{logDirectory}/{Environment.CurrentManagedThreadId}.txt";
+                StringBuilder logContent = new();
+                logContent.Append($"{new string('-', 20)} {DateTime.Now:dd-MM-yyyy HH:mm:ss tt} {new string('-', 20)}\n");
+                logContent.Append($"{logMessage}\n");
+                if (!Directory.Exists(logDirectory)) { Directory.CreateDirectory(logDirectory); }
+                if (!File.Exists(logPath)) { File.Create(logPath); }
+                File.AppendAllText(logPath, logContent.ToString());
+            }
+            catch (Exception) { }
         }
     }
 }
