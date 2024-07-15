@@ -1,5 +1,6 @@
 ﻿
 using InvoiceProcessor.Models.Entities;
+using InvoiceProcessor.Validations;
 
 namespace InvoiceProcessor.Models.RecordEntities
 {
@@ -9,6 +10,7 @@ namespace InvoiceProcessor.Models.RecordEntities
 
         public Field Fraccion { get; set; } = new(1, string.Empty);
         public Field VIN_Numero_Serie { get; set; } = new(2, string.Empty);
-        public Field<int> Kilometraje_Vehiculo { get; set; } = new(3, 0);
+        [MandatoryField(1,20,@"^\d+$")]
+        public Field<double> Kilometraje_Vehiculo { get; set; } = new(3, 0);
     }
 }

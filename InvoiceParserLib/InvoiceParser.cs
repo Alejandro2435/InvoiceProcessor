@@ -7,24 +7,18 @@ using static InvoiceProcessor.Utils.Globals;
 
 namespace InvoiceProcessor
 {
-    public class InvoiceParser
+    public class InvoiceParser(ICollection<(int, string)> recordLines, int distributeFactor = 1000)
     {
-        private readonly ICollection<(int, string)> _recordLines; 
-        private readonly int _distributeFactor;
+        private readonly ICollection<(int, string)> _recordLines = recordLines; 
+        private readonly int _distributeFactor = distributeFactor;
 
-        public InvoiceParser(ICollection<(int, string)> recordLines, int distributeFactor = 1000)
-        {
-            _recordLines = recordLines;
-            _distributeFactor = distributeFactor;
-        }
-
-        public static ICollection<Field> GetFields(string record)
+        public static ICollection<Field<string>> GetFields(string record)
         {
             Stopwatch sw = Stopwatch.StartNew();
-            ICollection<Field> fields = [];
+            ICollection<Field<string>> fields = [];
             try
             {
-                fields = record.Split((char)Separator.pipe).Select((field, index) => new Field(index, field)).ToList();
+                fields = record.Split((char)Separator.pipe).Select((field, index) => new Field<string>(index, field)).ToList();
             } catch (Exception ex)
             {
                 Log(ex.Message);
@@ -57,7 +51,7 @@ namespace InvoiceProcessor
 
         public static Record? ParseRecordLine((int,string) recordLine)
         {
-            ICollection<Field> fields = GetFields(recordLine.Item2);
+            ICollection<Field<string>> fields = GetFields(recordLine.Item2);
             Stopwatch sw = Stopwatch.StartNew();
             Record? record = null;
             try{
@@ -67,6 +61,7 @@ namespace InvoiceProcessor
                     _record.Content = recordLine.Item2;
                     _record.FileLine = recordLine.Item1;
                     _record.SetPropertyValues(fields.ToList());
+                    _record.ValidateRecord();
                     record = _record;
                 } 
             }
@@ -108,6 +103,7 @@ namespace InvoiceProcessor
                     }, cancelToken);
                 });
                 invoice.Records = _records.ToList();
+                invoice.IsValid = _records.AsParallel().All(record => record.IsValid);
             }
             catch(Exception ex)
             {

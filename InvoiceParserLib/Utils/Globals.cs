@@ -6,7 +6,7 @@ namespace InvoiceProcessor.Utils
 {
     public static class Globals
     {
-        public static void AssignPropertyValue(object entity, List<Field> fields)
+        public static void AssignPropertyValue(object entity, List<Field<string>> fields)
         {
             try{
                 List<PropertyInfo> properties = [.. entity.GetType().GetProperties().Where(property => {
@@ -16,7 +16,15 @@ namespace InvoiceProcessor.Utils
                 })];
                 properties.ForEach(property =>
                 {
-                    Field? f = fields.Where(field => field.Index == (property.GetValue(entity) as Field)?.Index).FirstOrDefault();
+                    //Type? propertyValueType;
+                    Field? propertyValue = (Field?)property.GetValue(entity);
+                    //if(propertyValue.NotNull() && propertyValue.GetType().IsGenericType)
+                    //{
+                    //    propertyValueType = typeof(Field<>);
+                    //    propertyValueType = propertyValue.GetType().GetGenericArguments()[0];
+                    //    Type xd = typeof(Field<>).MakeGenericType(propertyValueType);
+                    //}
+                    Field? f = (Field?)fields.FirstOrDefault(field => field.Index == propertyValue?.Index);
                     if (f.NotNull())
                     {
                         property.SetValue(entity, f);

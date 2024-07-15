@@ -2,7 +2,7 @@
 
 namespace InvoiceProcessor.Models.Entities
 {
-    public class Field<T>(int index, T value)
+    public class Field<T>(int index, T value) : IRecordField<T>
     {
         public int Index { get; } = index;
         public T Value { get; set; } = value;

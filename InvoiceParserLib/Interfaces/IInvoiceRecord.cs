@@ -10,6 +10,9 @@ namespace InvoiceProcessor.Interfaces
         int FileLine { get; set; }
         int FieldsCount {  get; }
         bool IsUnique {  get; }
+        List<string> Errors { get; set; }
+        bool IsValid { get; set; }
         void SetPropertyValues(List<Field> fields);
+        void ValidateRecord();
     }
 }
